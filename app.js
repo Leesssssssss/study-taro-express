@@ -71,4 +71,15 @@ app.post('/getNote', (req, res) => {
 })
 
 
+// 删除备忘录
+app.post('/deleteNote', (req, res) => {
+  var openid = req.body.openid;
+  var _id = req.body._id;
+
+  Users.updateOne({ openid: openid }, { $pull: { note: { _id: _id } } }, (err => {
+    console.log(err);
+  }))
+  res.send('删除备忘录成功')
+})
+
 app.listen(3000, () => console.log('Example app listening on port 3000!'))

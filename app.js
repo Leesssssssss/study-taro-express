@@ -48,11 +48,36 @@ app.post('/addNote', (req, res) => {
   var openid = req.body.openid;
   var top = req.body.top;
 
+  if (top === false) {
+    Users.find({ openid: openid }).then(result => {
+      if (result[0].note.length === 0) {
+        Users.updateOne({ openid: openid },
+          {
+            $push: {
+              note: {
+                title: req.body.title,
+                date: req.body.date,
+                repeat: req.body.repeat,
+                top: true,
+                day: req.body.day,
+                openid: req.body.openid
+              }
+            }
+          }, (err) => {
+            // console.log(err);
+          });
+      }
+    })
+    res.send('存储备忘录成功');
+    return;
+  }
+
   if (top === true) {
     Users.update({ openid: openid, 'note.top': true }, { $set: { 'note.$.top': false } }, (err) => {
       console.log(err);
     })
   }
+
   Users.updateOne({ openid: openid },
     { $push: { note: note } }, (err) => {
       // console.log(err);

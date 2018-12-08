@@ -37,7 +37,9 @@ app.post('/getUserInfo', (req, res) => {
 
   Users.updateOne({ openid: openid },
     { $set: { userInfo: userInfo } }, (err) => {
-      // console.log(err);
+      if (err) {
+        console.log(err);
+       }
     })
   res.send('存储用户信息成功');
 })
@@ -64,7 +66,9 @@ app.post('/addNote', (req, res) => {
               }
             }
           }, (err) => {
-            // console.log(err);
+            if (err) {
+              console.log(err);
+             }
           });
       }
     })
@@ -74,13 +78,17 @@ app.post('/addNote', (req, res) => {
 
   if (top === true) {
     Users.update({ openid: openid, 'note.top': true }, { $set: { 'note.$.top': false } }, (err) => {
-      console.log(err);
+      if (err) {
+        console.log(err);
+       }
     })
   }
 
   Users.updateOne({ openid: openid },
     { $push: { note: note } }, (err) => {
-      // console.log(err);
+      if (err) {
+        console.log(err);
+       }
     });
   res.send('存储备忘录成功');
 })
@@ -102,9 +110,39 @@ app.post('/deleteNote', (req, res) => {
   var _id = req.body._id;
 
   Users.updateOne({ openid: openid }, { $pull: { note: { _id: _id } } }, (err => {
-    console.log(err);
+    if (err) {
+      console.log(err);
+     }
   }))
-  res.send('删除备忘录成功')
+  res.send('删除备忘录成功');
+})
+
+// 修改备忘录
+app.post('/updateNote', (req, res) => {
+  var openid = req.body.openid;
+  var note = req.body;
+
+  if (note.top === true) {
+    Users.update({ openid: openid, 'note.top': true }, { $set: { 'note.$.top': false } }, (err) => {
+      if (err) {
+        console.log(err);
+       }
+    })
+  }
+
+  Users.update({ openid: openid, 'note._id': note._id }, { $set: { 
+    'note.$.title': note.title,
+    'note.$.date': note.date,
+    'note.$.repeat': note.repeat,
+    'note.$.top': note.top,
+    'note.$.day': note.day
+   } }, (err) => {
+     if (err) {
+      console.log(err);
+     }
+   })
+
+  res.send('修改备忘录成功');
 })
 
 app.listen(3000, () => console.log('Example app listening on port 3000!'))

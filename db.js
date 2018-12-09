@@ -19,7 +19,8 @@ var UsersSchema = new mongoose.Schema({
     date: String,
     repeat: String,
     top: Boolean,
-    day: String
+    day: String,
+    openid: String
   }]
 })
 

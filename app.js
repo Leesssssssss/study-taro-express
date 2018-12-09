@@ -39,7 +39,7 @@ app.post('/getUserInfo', (req, res) => {
     { $set: { userInfo: userInfo } }, (err) => {
       if (err) {
         console.log(err);
-       }
+      }
     })
   res.send('存储用户信息成功');
 })
@@ -50,8 +50,10 @@ app.post('/addNote', (req, res) => {
   var openid = req.body.openid;
   var top = req.body.top;
 
+  // 若该条备忘录为非置顶
   if (top === false) {
     Users.find({ openid: openid }).then(result => {
+      // 如果该条备忘录是第一条则默认必须置顶
       if (result[0].note.length === 0) {
         Users.updateOne({ openid: openid },
           {
@@ -68,7 +70,15 @@ app.post('/addNote', (req, res) => {
           }, (err) => {
             if (err) {
               console.log(err);
-             }
+            }
+          });
+      } else {
+        // 如果不是第一条直接存储
+        Users.updateOne({ openid: openid },
+          { $push: { note: note } }, (err) => {
+            if (err) {
+              console.log(err);
+            }
           });
       }
     })
@@ -76,21 +86,23 @@ app.post('/addNote', (req, res) => {
     return;
   }
 
+  // 若该条备忘录为置顶
   if (top === true) {
+    // 要先将之前设置为置顶的取消置顶
     Users.update({ openid: openid, 'note.top': true }, { $set: { 'note.$.top': false } }, (err) => {
       if (err) {
         console.log(err);
-       }
+      }
     })
+    // 再直接存储
+    Users.updateOne({ openid: openid },
+      { $push: { note: note } }, (err) => {
+        if (err) {
+          console.log(err);
+        }
+      });
+    res.send('存储备忘录成功');
   }
-
-  Users.updateOne({ openid: openid },
-    { $push: { note: note } }, (err) => {
-      if (err) {
-        console.log(err);
-       }
-    });
-  res.send('存储备忘录成功');
 })
 
 // 获取用户备忘录
@@ -112,7 +124,7 @@ app.post('/deleteNote', (req, res) => {
   Users.updateOne({ openid: openid }, { $pull: { note: { _id: _id } } }, (err => {
     if (err) {
       console.log(err);
-     }
+    }
   }))
   res.send('删除备忘录成功');
 })
@@ -126,21 +138,23 @@ app.post('/updateNote', (req, res) => {
     Users.update({ openid: openid, 'note.top': true }, { $set: { 'note.$.top': false } }, (err) => {
       if (err) {
         console.log(err);
-       }
+      }
     })
   }
 
-  Users.update({ openid: openid, 'note._id': note._id }, { $set: { 
-    'note.$.title': note.title,
-    'note.$.date': note.date,
-    'note.$.repeat': note.repeat,
-    'note.$.top': note.top,
-    'note.$.day': note.day
-   } }, (err) => {
-     if (err) {
+  Users.update({ openid: openid, 'note._id': note._id }, {
+    $set: {
+      'note.$.title': note.title,
+      'note.$.date': note.date,
+      'note.$.repeat': note.repeat,
+      'note.$.top': note.top,
+      'note.$.day': note.day
+    }
+  }, (err) => {
+    if (err) {
       console.log(err);
-     }
-   })
+    }
+  })
 
   res.send('修改备忘录成功');
 })

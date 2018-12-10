@@ -83,7 +83,6 @@ app.post('/addNote', (req, res) => {
       }
     })
     res.send('存储备忘录成功');
-    return;
   }
 
   // 若该条备忘录为置顶
@@ -134,29 +133,69 @@ app.post('/updateNote', (req, res) => {
   var openid = req.body.openid;
   var note = req.body;
 
+  // 若修改的备忘录是置顶
   if (note.top === true) {
+    // 先将之前置顶的取消置顶
     Users.update({ openid: openid, 'note.top': true }, { $set: { 'note.$.top': false } }, (err) => {
       if (err) {
         console.log(err);
       }
     })
+    // 再存储修改后的备忘录
+    Users.update({ openid: openid, 'note._id': note._id }, {
+      $set: {
+        'note.$.title': note.title,
+        'note.$.date': note.date,
+        'note.$.repeat': note.repeat,
+        'note.$.top': note.top,
+        'note.$.day': note.day
+      }
+    }, (err) => {
+      if (err) {
+        console.log(err);
+      }
+    })
+    res.send('修改备忘录成功');
   }
 
-  Users.update({ openid: openid, 'note._id': note._id }, {
-    $set: {
-      'note.$.title': note.title,
-      'note.$.date': note.date,
-      'note.$.repeat': note.repeat,
-      'note.$.top': note.top,
-      'note.$.day': note.day
-    }
-  }, (err) => {
-    if (err) {
-      console.log(err);
-    }
-  })
+  // 若修改的备忘录为非置顶
+  if (note.top === false) {
+    // 如果是第一条则默认置顶不可更改
+    Users.find({ openid: openid }).then(result => {
+      if (result[0].note.length === 1) {
+        Users.update({ openid: openid, 'note._id': note._id }, {
+          $set: {
+            'note.$.title': note.title,
+            'note.$.date': note.date,
+            'note.$.repeat': note.repeat,
+            'note.$.top': true,
+            'note.$.day': note.day
+          }
+        }, (err) => {
+          if (err) {
+            console.log(err);
+          }
+        })
+      } else {
+        // 否则直接存储修改的备忘录
+        Users.update({ openid: openid, 'note._id': note._id }, {
+          $set: {
+            'note.$.title': note.title,
+            'note.$.date': note.date,
+            'note.$.repeat': note.repeat,
+            'note.$.top': note.top,
+            'note.$.day': note.day
+          }
+        }, (err) => {
+          if (err) {
+            console.log(err);
+          }
+        })
+      }
+    })
+    res.send('修改备忘录成功');
+  }
 
-  res.send('修改备忘录成功');
 })
 
 app.listen(3000, () => console.log('Example app listening on port 3000!'))

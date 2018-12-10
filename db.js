@@ -1,6 +1,13 @@
 var mongoose = require('mongoose');
 
-mongoose.connect('mongodb://localhost/taroStar', { useNewUrlParser: true });
+let env = process.env.NODE_ENV || 'development'
+let dbUrl = 'mongodb://127.0.0.1:20811/taroStar'
+// 开发环境连接测试使用的 MongoDB 服务器
+if (env === 'development') {
+  dbUrl = 'mongodb://127.0.0.1/taroStar'
+}
+
+mongoose.connect(dbUrl, { useNewUrlParser: true })
 
 var UsersSchema = new mongoose.Schema({
   openid: String,

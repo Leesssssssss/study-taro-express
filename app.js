@@ -119,6 +119,21 @@ app.post('/getNote', (req, res) => {
 app.post('/deleteNote', (req, res) => {
   var openid = req.body.openid;
   var _id = req.body._id;
+  var top = req.body.top;
+
+  // 如果删除置顶备忘录（由于页面传参是通过url传参，参数都被转换成字符串，而不是布尔值了）
+  if (top === 'true') {
+    Users.find({ openid: openid }).then(result => {
+      // 如果备忘录大于1条，则修改下一条为置顶
+      if (result[0].note.length > 1) {
+        Users.update({ openid: openid, 'note.top': false }, { $set: { 'note.$.top': true } }, (err) => {
+          if (err) {
+            console.log(err);
+          }
+        })
+      }
+    })
+  }
 
   Users.updateOne({ openid: openid }, { $pull: { note: { _id: _id } } }, (err => {
     if (err) {
@@ -177,6 +192,21 @@ app.post('/updateNote', (req, res) => {
           }
         })
       } else {
+        // 如果修改的是之前的置顶备忘录
+        Users.find({ openid: openid }).then(result => {
+          for (var i = 0; i < result[0].note.length; i++) {
+            if (result[0].note[i]._id == note._id) {
+              if (result[0].note[i].top === true) {
+                // 先将下一条改成置顶
+                Users.update({ openid: openid, 'note.top': false }, { $set: { 'note.$.top': true } }, (err) => {
+                  if (err) {
+                    console.log(err);
+                  }
+                })
+              };
+            }
+          }
+        })
         // 否则直接存储修改的备忘录
         Users.update({ openid: openid, 'note._id': note._id }, {
           $set: {

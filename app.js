@@ -120,13 +120,14 @@ app.post('/deleteNote', (req, res) => {
   var openid = req.body.openid;
   var _id = req.body._id;
   var top = req.body.top;
+  var _id1 = req.body._id1;
 
   // 如果删除置顶备忘录（由于页面传参是通过url传参，参数都被转换成字符串，而不是布尔值了）
   if (top === 'true') {
     Users.find({ openid: openid }).then(result => {
       // 如果备忘录大于1条，则修改下一条为置顶
       if (result[0].note.length > 1) {
-        Users.update({ openid: openid, 'note.top': false }, { $set: { 'note.$.top': true } }, (err) => {
+        Users.update({ openid: openid, 'note._id': _id1 }, { $set: { 'note.$.top': true } }, (err) => {
           if (err) {
             console.log(err);
           }
@@ -175,7 +176,7 @@ app.post('/updateNote', (req, res) => {
 
   // 若修改的备忘录为非置顶
   if (note.top === false) {
-    // 如果是第一条则默认置顶不可更改
+    // 如果只有一条备忘录则默认置顶不可更改
     Users.find({ openid: openid }).then(result => {
       if (result[0].note.length === 1) {
         Users.update({ openid: openid, 'note._id': note._id }, {
@@ -198,7 +199,7 @@ app.post('/updateNote', (req, res) => {
             if (result[0].note[i]._id == note._id) {
               if (result[0].note[i].top === true) {
                 // 先将下一条改成置顶
-                Users.update({ openid: openid, 'note.top': false }, { $set: { 'note.$.top': true } }, (err) => {
+                Users.update({ openid: openid, 'note._id': note._id1 }, { $set: { 'note.$.top': true } }, (err) => {
                   if (err) {
                     console.log(err);
                   }
@@ -228,4 +229,4 @@ app.post('/updateNote', (req, res) => {
 
 })
 
-app.listen(3003, () => console.log('Example app listening on port 3003!'))
+app.listen(3000, () => console.log('Example app listening on port 3000!'))
